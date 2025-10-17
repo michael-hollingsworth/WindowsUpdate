@@ -1,5 +1,5 @@
 #using namespace Microsoft.VisualBasic
-Add-Type -Namespace Microsoft.VisualBasic
+Add-Type -AssemblyName Microsoft.VisualBasic
 
 <#
 .SYNOPSIS
