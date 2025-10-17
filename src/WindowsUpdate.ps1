@@ -20,6 +20,8 @@ class WindowsUpdate {
             return
         }
 
+        Write-Verbose -Message "Accepting the EULA for the update [$($this.Title)] with the following terms and conditions: `r`n$($this.EulaText)"
+
         $this._updateObject.AcceptEula()
         return
     }
@@ -71,6 +73,10 @@ class WindowsUpdate {
         return
     }
 
+    [String] ToString() {
+        return $this._updateObject.Identity.UpdateID
+    }
+
     static [WindowsUpdate[]] Get() {
         return ([WindowsUpdate]::Search('IsInstalled = 0 AND IsHidden = 0'))
     }
@@ -93,6 +99,8 @@ class WindowsUpdate {
         try {
             [__ComObject]$private:updateSession = New-Object -ComObject Microsoft.Update.Session
             [__ComObject]$updateSearcher = $updateSession.CreateUpdateSearcher()
+
+            Write-Verbose -Message "Searching for Windows Updates with the search query [$SearchQuery]."
 
             [__ComObject]$searchResults = $updateSearcher.Search($SearchQuery)
 
@@ -139,15 +147,21 @@ class WindowsUpdate {
                     $update.AcceptEula()
                 }
 
+                Write-Verbose -Message "Downloading and installing update [$($update.Name)]"
+
                 $null = $updateColl.Add($update._updateObject)
             }
 
             [__ComObject]$updateDownloader = $updateSession.CreateUpdateDownloader()
             $updateDownloader.Updates = $updateColl
+
+            Write-Verbose -Message "Downloading [$($updateColl.Updates.Count)] updates."
             [__ComObject]$downloadResults = $updateDownloader.Download()
 
             [__ComObject]$updateInstaller = $updateSession.CreateUpdateInstaller()
             $updateInstaller.Updates = $updateColl
+
+            Write-Verbose -Message "Installing [$($updateColl.Updates.Count)] updates."
             [__ComObject]$installResults = $updateInstaller.Install()
         } finally {
             if ($null -ne $updateSession) {
@@ -190,18 +204,19 @@ class WindowsUpdate {
     }
 }
 
-Update-TypeData -TypeName WindowsUpdate -MemberName Title -MemberType ScriptProperty -Value { return ($this._updateObject.Title) }
-Update-TypeData -TypeName WindowsUpdate -MemberName Description -MemberType ScriptProperty -Value { return ($this._updateObject.Description) }
+Update-TypeData -TypeName WindowsUpdate -MemberName Title -MemberType ScriptProperty -Value { return $this._updateObject.Title }
+Update-TypeData -TypeName WindowsUpdate -MemberName Description -MemberType ScriptProperty -Value { return $this._updateObject.Description }
 #Update-TypeData -TypeName WindowsUpdate -MemberName Category -MemberType ScriptProperty -Value { return (Select-Object -InputObject $this._updateObject -Property Categories) }
 Update-TypeData -TypeName WindowsUpdate -MemberName Type -MemberType ScriptProperty -Value { return (Select-Object -InputObject $this._updateObject -Property Type) }
-Update-TypeData -TypeName WindowsUpdate -MemberName IsDownloaded -MemberType ScriptProperty -Value { return ($this._updateObject.IsDownloaded) }
-Update-TypeData -TypeName WindowsUpdate -MemberName IsInstalled -MemberType ScriptProperty -Value { return ($this._updateObject.IsInstalled) }
-Update-TypeData -TypeName WindowsUpdate -MemberName IsPresent -MemberType ScriptProperty -Value { return ($this._updateObject.IsPresent) }
-Update-TypeData -TypeName WindowsUpdate -MemberName IsRebootRequired -MemberType ScriptProperty -Value { return ($this._updateObject.RebootRequired) }
-Update-TypeData -TypeName WindowsUpdate -MemberName IsHidden -MemberType ScriptProperty -Value { return ($this._updateObject.IsHidden) }
-Update-TypeData -TypeName WindowsUpdate -MemberName IsMandatory -MemberType ScriptProperty -Value { return ($this._updateObject.IsMandatory) }
-Update-TypeData -TypeName WindowsUpdate -MemberName IsEulaAccepted -MemberType ScriptProperty -Value { return ($this._updateObject.EulaAccepted) }
-Update-TypeData -TypeName WindowsUpdate -MemberName EulaText -MemberType ScriptProperty -Value { return ($this._updateObject.EulaText) }
+Update-TypeData -TypeName WindowsUpdate -MemberName IsDownloaded -MemberType ScriptProperty -Value { return $this._updateObject.IsDownloaded }
+Update-TypeData -TypeName WindowsUpdate -MemberName IsInstalled -MemberType ScriptProperty -Value { return $this._updateObject.IsInstalled }
+Update-TypeData -TypeName WindowsUpdate -MemberName IsPresent -MemberType ScriptProperty -Value { return $this._updateObject.IsPresent }
+Update-TypeData -TypeName WindowsUpdate -MemberName IsRebootRequired -MemberType ScriptProperty -Value { return $this._updateObject.RebootRequired }
+Update-TypeData -TypeName WindowsUpdate -MemberName IsHidden -MemberType ScriptProperty -Value { return $this._updateObject.IsHidden }
+Update-TypeData -TypeName WindowsUpdate -MemberName IsMandatory -MemberType ScriptProperty -Value { return $this._updateObject.IsMandatory }
+Update-TypeData -TypeName WindowsUpdate -MemberName IsEulaAccepted -MemberType ScriptProperty -Value { return $this._updateObject.EulaAccepted }
+Update-TypeData -TypeName WindowsUpdate -MemberName EulaText -MemberType ScriptProperty -Value { return $this._updateObject.EulaText }
+Update-TypeData -TypeName WindowsUpdate -MemberName UpdateID -MemberType ScriptProperty -Value { return $this._updateObject.Identity.UpdateID }
 
 Update-TypeData -TypeName WindowsUpdate -DefaultDisplayPropertySet @(
     'Title',
